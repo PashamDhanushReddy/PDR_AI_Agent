@@ -1,0 +1,21 @@
+{
+  "name": "PDR AI AGENT",
+  "short_name": "PDR AI",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#111827",
+  "description": "Your intelligent AI assistant with long-term memory",
+  "icons": [
+    {
+      "src": "/pdr_logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/pdr_logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
