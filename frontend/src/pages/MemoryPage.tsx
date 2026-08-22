@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Bot, Trash2, Tag, Clock, Sparkles } from 'lucide-react';
+import { ArrowLeft, Bot, Trash2, Tag, Clock, Sparkles, LogOut } from 'lucide-react';
 
 interface Memory {
   id: number;
@@ -34,6 +34,13 @@ export default function MemoryPage() {
   };
 
   useEffect(() => { fetchMemories(); }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('activeConversationId');
+    navigate('/auth');
+  };
 
   const handleDelete = async (id: number) => {
     try {
@@ -76,11 +83,16 @@ export default function MemoryPage() {
               </p>
             </div>
           </div>
-          {memories.length > 0 && (
-            <span className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary text-sm font-semibold">
-              <Sparkles size={14} /> {memories.length} memories
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {memories.length > 0 && (
+              <span className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary text-sm font-semibold">
+                <Sparkles size={14} /> {memories.length} memories
+              </span>
+            )}
+            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 rounded-full border border-red-200 bg-white text-red-500 text-sm font-semibold hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm">
+              <LogOut size={16} /> <span className="hidden sm:inline">Log Out</span>
+            </button>
+          </div>
         </header>
 
         {/* Content */}

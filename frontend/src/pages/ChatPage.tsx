@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Send, Menu, Plus, User as UserIcon, Bot, MessageSquare, X, Sparkles } from 'lucide-react';
+import { Send, Menu, Plus, User as UserIcon, Bot, MessageSquare, X, Sparkles, LogOut } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChatStore } from '../store/chatStore';
@@ -42,6 +42,13 @@ export default function ChatPage() {
     };
     fetchConversations();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('activeConversationId');
+    navigate('/auth');
+  };
 
   const activeConversation = conversations.find(c => c.id === activeConversationId);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -143,12 +150,16 @@ export default function ChatPage() {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-primary/10">
+        <div className="p-4 border-t border-primary/10 space-y-1">
           <Link to="/memory" className="flex items-center gap-3 text-gray-600 hover:text-white p-3 rounded-xl hover:bg-white/5 transition-all group">
             <UserIcon size={18} className="text-primary/70 group-hover:text-primary transition-colors" />
             <span className="text-sm font-medium">Manage Memory</span>
             <Sparkles size={14} className="ml-auto text-primary/30 group-hover:text-primary/70 transition-colors" />
           </Link>
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 text-gray-600 hover:text-red-400 p-3 rounded-xl hover:bg-white/5 transition-all group">
+            <LogOut size={18} className="text-red-500/70 group-hover:text-red-400 transition-colors" />
+            <span className="text-sm font-medium">Log Out</span>
+          </button>
         </div>
       </div>
 
