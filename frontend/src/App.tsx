@@ -10,7 +10,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? children : <Navigate to="/auth" />;
 }
 
+import { useTheme } from './hooks/useTheme';
+
 function App() {
+  useTheme();
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <div className="min-h-screen bg-background text-foreground">

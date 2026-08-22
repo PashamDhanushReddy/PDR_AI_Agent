@@ -5,12 +5,17 @@ import { Send, Menu, Plus, User as UserIcon, Bot, MessageSquare, X, Sparkles, Lo
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChatStore } from '../store/chatStore';
+import { useTheme } from '../hooks/useTheme';
 
 export default function ChatPage() {
   const [input, setInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsView, setSettingsView] = useState<'main' | 'password' | 'upload'>('main');
+  const [passwordForm, setPasswordForm] = useState({ old: '', new: '', confirm: '', error: '', success: '', loading: false });
+  const [uploadForm, setUploadForm] = useState({ file: null as File | null, error: '', success: '', loading: false });
+  const toggleTheme = useTheme();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -97,6 +102,42 @@ export default function ChatPage() {
     await sendMessage(messageText, messageImage || undefined);
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.new !== passwordForm.confirm) {
+      setPasswordForm(p => ({ ...p, error: 'Passwords do not match', success: '' }));
+      return;
+    }
+    setPasswordForm(p => ({ ...p, loading: true, error: '', success: '' }));
+    try {
+      const token = localStorage.getItem('access_token');
+      await axios.post(`${import.meta.env.VITE_API_URL}/auth/change-password/`, {
+        old_password: passwordForm.old,
+        new_password: passwordForm.new
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setPasswordForm(p => ({ ...p, loading: false, success: 'Password changed successfully!', old: '', new: '', confirm: '' }));
+    } catch (err: any) {
+      setPasswordForm(p => ({ ...p, loading: false, error: err.response?.data?.error || 'Failed to change password' }));
+    }
+  };
+
+  const handleUploadMemory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadForm.file) return;
+    setUploadForm(p => ({ ...p, loading: true, error: '', success: '' }));
+    try {
+      const token = localStorage.getItem('access_token');
+      const formData = new FormData();
+      formData.append('file', uploadForm.file);
+      await axios.post(`${import.meta.env.VITE_API_URL}/memories/upload/`, formData, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+      });
+      setUploadForm(p => ({ ...p, loading: false, success: 'Memory extracted successfully!', file: null }));
+    } catch (err: any) {
+      setUploadForm(p => ({ ...p, loading: false, error: err.response?.data?.error || 'Failed to process file' }));
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-background animated-bg" style={{ height: '100dvh', width: '100vw' }}>
       {/* Orbs */}
@@ -157,7 +198,7 @@ export default function ChatPage() {
             <span className="text-sm font-medium">Manage Memory</span>
             <Sparkles size={14} className="ml-auto text-primary/30 group-hover:text-primary/70 transition-colors" />
           </Link>
-          <button onClick={() => setSettingsOpen(true)} className="w-full flex items-center gap-3 text-gray-600 hover:text-white p-3 rounded-xl hover:bg-white/5 transition-all group">
+          <button onClick={() => { setSettingsView('main'); setSettingsOpen(true); }} className="w-full flex items-center gap-3 text-gray-600 hover:text-white p-3 rounded-xl hover:bg-white/5 transition-all group">
             <Settings size={18} className="text-gray-500 group-hover:text-gray-300 transition-colors" />
             <span className="text-sm font-medium">Settings</span>
           </button>
@@ -328,52 +369,94 @@ export default function ChatPage() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-slide-in-up">
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Settings size={20} className="text-primary" /> Settings
+                {settingsView === 'main' ? <><Settings size={20} className="text-primary" /> Settings</> : null}
+                {settingsView === 'password' ? <><Lock size={20} className="text-red-500" /> Change Password</> : null}
+                {settingsView === 'upload' ? <><UploadCloud size={20} className="text-blue-500" /> Upload Memory</> : null}
               </h2>
               <button onClick={() => setSettingsOpen(false)} className="text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-lg transition-colors">
                 <X size={18} />
               </button>
             </div>
-            <div className="p-4 space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Appearance</label>
-                <button className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
-                      <Moon size={16} className="text-gray-600" />
+            
+            {settingsView === 'main' && (
+              <div className="p-4 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Appearance</label>
+                  <button onClick={toggleTheme} className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                        <Moon size={16} className="text-gray-600" />
+                      </div>
+                      <span className="font-medium text-gray-700">Toggle Dark Mode</span>
                     </div>
-                    <span className="font-medium text-gray-700">Dark Mode</span>
-                  </div>
-                  <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded-md font-semibold">Coming Soon</span>
-                </button>
-              </div>
+                  </button>
+                </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Account</label>
-                <button className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
-                      <Lock size={16} className="text-red-500" />
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Account</label>
+                  <button onClick={() => setSettingsView('password')} className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                        <Lock size={16} className="text-red-500" />
+                      </div>
+                      <span className="font-medium text-gray-700">Change Password</span>
                     </div>
-                    <span className="font-medium text-gray-700">Change Password</span>
-                  </div>
-                  <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
-                </button>
-              </div>
+                    <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+                  </button>
+                </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Data & Memory</label>
-                <button className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
-                      <UploadCloud size={16} className="text-blue-500" />
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Data & Memory</label>
+                  <button onClick={() => setSettingsView('upload')} className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                        <UploadCloud size={16} className="text-blue-500" />
+                      </div>
+                      <span className="font-medium text-gray-700">Upload Memory Files</span>
                     </div>
-                    <span className="font-medium text-gray-700">Upload Memory Files</span>
-                  </div>
-                  <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded-md font-semibold">Coming Soon</span>
-                </button>
+                    <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {settingsView === 'password' && (
+              <form onSubmit={handleChangePassword} className="p-4 space-y-4">
+                <input type="password" required placeholder="Old Password" value={passwordForm.old} onChange={(e) => setPasswordForm(p => ({ ...p, old: e.target.value, error: '', success: '' }))} className="w-full px-4 py-3 rounded-xl border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 outline-none" />
+                <input type="password" required placeholder="New Password" value={passwordForm.new} onChange={(e) => setPasswordForm(p => ({ ...p, new: e.target.value, error: '', success: '' }))} className="w-full px-4 py-3 rounded-xl border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 outline-none" />
+                <input type="password" required placeholder="Confirm New Password" value={passwordForm.confirm} onChange={(e) => setPasswordForm(p => ({ ...p, confirm: e.target.value, error: '', success: '' }))} className="w-full px-4 py-3 rounded-xl border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 outline-none" />
+                {passwordForm.error && <p className="text-red-500 text-sm">{passwordForm.error}</p>}
+                {passwordForm.success && <p className="text-green-600 text-sm">{passwordForm.success}</p>}
+                <div className="flex gap-2 pt-2">
+                  <button type="button" onClick={() => setSettingsView('main')} className="flex-1 py-3 text-gray-600 font-medium rounded-xl hover:bg-gray-100 transition-colors">Back</button>
+                  <button type="submit" disabled={passwordForm.loading} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50">
+                    {passwordForm.loading ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {settingsView === 'upload' && (
+              <form onSubmit={handleUploadMemory} className="p-4 space-y-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 transition-colors relative">
+                  <input type="file" accept=".txt,.pdf,.csv" onChange={(e) => setUploadForm(p => ({ ...p, file: e.target.files?.[0] || null, error: '', success: '' }))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                  <UploadCloud size={32} className="text-blue-400 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-700">
+                    {uploadForm.file ? uploadForm.file.name : "Tap to select or drop a file"}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Supports TXT, PDF (Max 5MB)</p>
+                </div>
+                {uploadForm.error && <p className="text-red-500 text-sm">{uploadForm.error}</p>}
+                {uploadForm.success && <p className="text-green-600 text-sm">{uploadForm.success}</p>}
+                <div className="flex gap-2 pt-2">
+                  <button type="button" onClick={() => setSettingsView('main')} className="flex-1 py-3 text-gray-600 font-medium rounded-xl hover:bg-gray-100 transition-colors">Back</button>
+                  <button type="submit" disabled={uploadForm.loading || !uploadForm.file} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50">
+                    {uploadForm.loading ? 'Extracting...' : 'Upload & Extract'}
+                  </button>
+                </div>
+              </form>
+            )}
+
             <div className="p-4 border-t bg-gray-50">
               <p className="text-xs text-center text-gray-500">
                 PDR AI AGENT • Built by Pasham Dhanush Reddy
