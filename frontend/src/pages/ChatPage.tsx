@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Send, Menu, Plus, User as UserIcon, Bot, MessageSquare, X, Sparkles, LogOut, Settings, Moon, Lock, UploadCloud } from 'lucide-react';
+import { Send, Menu, Plus, User as UserIcon, Bot, MessageSquare, X, Sparkles, LogOut, Settings, Moon, Lock, UploadCloud, ArrowRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChatStore } from '../store/chatStore';
