@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Send, Menu, Plus, User as UserIcon, Bot, MessageSquare, X, Sparkles, LogOut } from 'lucide-react';
+import { Send, Menu, Plus, User as UserIcon, Bot, MessageSquare, X, Sparkles, LogOut, Settings, Moon, Lock, UploadCloud } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChatStore } from '../store/chatStore';
@@ -10,6 +10,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -156,6 +157,10 @@ export default function ChatPage() {
             <span className="text-sm font-medium">Manage Memory</span>
             <Sparkles size={14} className="ml-auto text-primary/30 group-hover:text-primary/70 transition-colors" />
           </Link>
+          <button onClick={() => setSettingsOpen(true)} className="w-full flex items-center gap-3 text-gray-600 hover:text-white p-3 rounded-xl hover:bg-white/5 transition-all group">
+            <Settings size={18} className="text-gray-500 group-hover:text-gray-300 transition-colors" />
+            <span className="text-sm font-medium">Settings</span>
+          </button>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 text-gray-600 hover:text-red-400 p-3 rounded-xl hover:bg-white/5 transition-all group">
             <LogOut size={18} className="text-red-500/70 group-hover:text-red-400 transition-colors" />
             <span className="text-sm font-medium">Log Out</span>
@@ -166,15 +171,16 @@ export default function ChatPage() {
       {/* ── Main Area ── */}
       <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative bg-background">
         {/* ── App Header (Solid & Fixed) ── */}
-        <div className="flex-none h-14 md:h-16 w-full flex items-center justify-between px-4 z-20 shadow-sm border-b" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
-          {/* Left: Menu Toggle */}
-          <div className="w-12 flex justify-start">
-            {!sidebarOpen && (
-              <button onClick={() => setSidebarOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-200/50 transition-colors">
-                <Menu size={20} />
-              </button>
-            )}
-          </div>
+        <div className="flex-none w-full z-20 shadow-sm border-b" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', paddingTop: 'env(safe-area-inset-top)' }}>
+          <div className="h-14 md:h-16 w-full flex items-center justify-between px-4">
+            {/* Left: Menu Toggle */}
+            <div className="w-12 flex justify-start">
+              {!sidebarOpen && (
+                <button onClick={() => setSidebarOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-200/50 transition-colors">
+                  <Menu size={20} />
+                </button>
+              )}
+            </div>
           
           {/* Center: App Title */}
           <div className="flex-1 flex justify-center">
@@ -183,11 +189,12 @@ export default function ChatPage() {
             </span>
           </div>
 
-          {/* Right: New Chat (Mobile) */}
-          <div className="w-12 flex justify-end">
-            <button onClick={() => setActiveConversation(null)} className="w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-200/50 transition-colors md:hidden">
-              <Plus size={20} />
-            </button>
+            {/* Right: New Chat (Mobile) */}
+            <div className="w-12 flex justify-end">
+              <button onClick={() => setActiveConversation(null)} className="w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-200/50 transition-colors md:hidden">
+                <Plus size={20} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -314,6 +321,67 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Settings Modal ── */}
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-slide-in-up">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Settings size={20} className="text-primary" /> Settings
+              </h2>
+              <button onClick={() => setSettingsOpen(false)} className="text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-lg transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Appearance</label>
+                <button className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                      <Moon size={16} className="text-gray-600" />
+                    </div>
+                    <span className="font-medium text-gray-700">Dark Mode</span>
+                  </div>
+                  <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded-md font-semibold">Coming Soon</span>
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Account</label>
+                <button className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                      <Lock size={16} className="text-red-500" />
+                    </div>
+                    <span className="font-medium text-gray-700">Change Password</span>
+                  </div>
+                  <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Data & Memory</label>
+                <button className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                      <UploadCloud size={16} className="text-blue-500" />
+                    </div>
+                    <span className="font-medium text-gray-700">Upload Memory Files</span>
+                  </div>
+                  <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded-md font-semibold">Coming Soon</span>
+                </button>
+              </div>
+            </div>
+            <div className="p-4 border-t bg-gray-50">
+              <p className="text-xs text-center text-gray-500">
+                PDR AI AGENT • Built by Pasham Dhanush Reddy
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
