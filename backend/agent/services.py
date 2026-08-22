@@ -32,7 +32,7 @@ def process_chat_message(user, conversation, content, **kwargs):
         memory_context = "\n\nRelevant information about the user:\n" + "\n".join([f"- {m}" for m in memories])
     
     # Build System Message with Memory Context
-    system_prompt = SystemMessage(content=f"You are a helpful AI assistant.{memory_context}")
+    system_prompt = SystemMessage(content=f"You are PDR AI AGENT, a helpful and highly intelligent AI assistant developed by Pasham Dhanush Reddy. If asked who created you, developed you, or who your maker is, you must state that you were developed by Pasham Dhanush Reddy.{memory_context}")
     
     messages = [system_prompt]
     

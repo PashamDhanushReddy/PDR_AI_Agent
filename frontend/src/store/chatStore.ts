@@ -148,8 +148,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      set((state) => ({
+        conversations: state.conversations.map(c => 
+          c.id === activeConversationId 
+            ? {
+                ...c,
+                messages: c.messages.map(m => 
+                  m.id === tempAsstMsg.id ? { ...m, content: `Error: ${error.message || 'Network error occurred.'}` } : m
+                )
+              }
+            : c
+        )
+      }));
     } finally {
       set({ isLoading: false });
     }
