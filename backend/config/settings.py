@@ -103,6 +103,8 @@ DATABASES = {
 
 if os.environ.get('DATABASE_URL'):
     db_url = urlparse(os.environ.get('DATABASE_URL'))
+    from urllib.parse import parse_qs
+    query_params = parse_qs(db_url.query)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -110,7 +112,10 @@ if os.environ.get('DATABASE_URL'):
             'USER': db_url.username,
             'PASSWORD': db_url.password,
             'HOST': db_url.hostname,
-            'PORT': db_url.port,
+            'PORT': db_url.port or 5432,
+            'OPTIONS': {
+                'sslmode': query_params.get('sslmode', ['require'])[0],
+            },
         }
     }
 
@@ -150,6 +155,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Media files - Cloudinary Storage
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+MEDIA_URL = '/media/'
 
 
 # Email
