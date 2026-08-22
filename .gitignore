@@ -29,7 +29,8 @@ ENV/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
+# Only ignore uploaded media files, NOT the media Django app
+backend/media/uploaded/
 
 # Environment variables - NEVER commit these
 backend/.env
@@ -42,7 +43,7 @@ frontend/dist/
 frontend/build/
 frontend/.env
 frontend/.env.local
-frontend/.env.production
+# .env.production is safe to commit - it only contains the public API URL
 
 # IDE
 .vscode/
