@@ -28,3 +28,7 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.role} message in {self.conversation.id}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.conversation.save()

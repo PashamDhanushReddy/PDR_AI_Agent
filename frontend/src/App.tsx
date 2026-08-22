@@ -3,9 +3,14 @@ import AuthPage from './pages/AuthPage';
 import ChatPage from './pages/ChatPage';
 import MemoryPage from './pages/MemoryPage';
 
-function App() {
-  const isAuthenticated = !!localStorage.getItem('access_token');
+import React from 'react';
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = !!localStorage.getItem('access_token');
+  return isAuthenticated ? children : <Navigate to="/auth" />;
+}
+
+function App() {
   return (
     <Router>
       <div className="min-h-screen bg-background text-foreground">
@@ -13,11 +18,11 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route 
             path="/chat" 
-            element={isAuthenticated ? <ChatPage /> : <Navigate to="/auth" />} 
+            element={<ProtectedRoute><ChatPage /></ProtectedRoute>} 
           />
           <Route 
             path="/memory" 
-            element={isAuthenticated ? <MemoryPage /> : <Navigate to="/auth" />} 
+            element={<ProtectedRoute><MemoryPage /></ProtectedRoute>} 
           />
           <Route path="/" element={<Navigate to="/chat" />} />
         </Routes>

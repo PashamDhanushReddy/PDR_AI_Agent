@@ -18,12 +18,12 @@ interface ChatState {
   activeConversationId: string | null;
   isLoading: boolean;
   setConversations: (conversations: Conversation[]) => void;
-  setActiveConversation: (id: string) => void;
+  setActiveConversation: (id: string | null) => void;
   sendMessage: (content: string, imageBase64?: string) => Promise<void>;
 }
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1',
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 // Assuming token is stored in localStorage
@@ -41,10 +41,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoading: false,
 
   setConversations: (conversations) => set({ conversations }),
-  setActiveConversation: (id) => set({ activeConversationId: id }),
+  setActiveConversation: (id) => {
+    if (id) {
+      sessionStorage.setItem('activeConversationId', id);
+    } else {
+      sessionStorage.removeItem('activeConversationId');
+    }
+    set({ activeConversationId: id });
+  },
 
   sendMessage: async (content: string, imageBase64?: string) => {
-    const { activeConversationId, conversations } = get();
+    const { activeConversationId } = get();
     if (!activeConversationId) return;
 
     const messagePayload = imageBase64 ? JSON.stringify({ text: content, image: imageBase64 }) : content;
@@ -54,18 +61,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const newUserMsg: Message = { id: tempId, role: 'user', content: messagePayload };
     const tempAsstMsg: Message = { id: tempId + 'a', role: 'assistant', content: '' };
     
-    set((state) => ({
-      conversations: state.conversations.map(c => 
-        c.id === activeConversationId 
-          ? { ...c, messages: [...c.messages, newUserMsg, tempAsstMsg] }
-          : c
-      )
-    }));
+    set((state) => {
+      const activeConv = state.conversations.find(c => c.id === activeConversationId);
+      if (!activeConv) return state;
+      
+      const updatedConv = { ...activeConv, messages: [...activeConv.messages, newUserMsg, tempAsstMsg] };
+      const otherConvs = state.conversations.filter(c => c.id !== activeConversationId);
+      
+      return { conversations: [updatedConv, ...otherConvs] };
+    });
 
     try {
       set({ isLoading: true });
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:8000/api/v1/conversations/${activeConversationId}/stream/`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/conversations/${activeConversationId}/stream/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

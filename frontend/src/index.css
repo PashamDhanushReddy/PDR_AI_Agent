@@ -1,45 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+/* ── CSS Variables: Light Mode (default) ── */
+:root {
+  --bg:          #f1f5f9;
+  --bg-sidebar:  #111827;   /* sidebar stays dark like TalentLink */
+  --bg-card:     #ffffff;
+  --bg-card2:    #f8fafc;
+  --text:        #0f172a;
+  --text-muted:  #475569;
+  --text-faint:  #94a3b8;
+  --border:      rgba(0,0,0,0.08);
+  --border-blue: rgba(37,99,235,0.25);
+  --shadow:      0 4px 24px rgba(0,0,0,0.04);
+  --input-bg:    #ffffff;
+  --active-bg:   rgba(37,99,235,0.10);
+}
+
+/* ── Dark Mode ── */
+html.dark {
+  --bg:          #0f172a;
+  --bg-sidebar:  #111827;
+  --bg-card:     #1e293b;
+  --bg-card2:    #334155;
+  --text:        #f8fafc;
+  --text-muted:  #94a3b8;
+  --text-faint:  #475569;
+  --border:      rgba(255,255,255,0.07);
+  --border-blue: rgba(37,99,235,0.30);
+  --shadow:      0 4px 24px rgba(0,0,0,0.40);
+  --input-bg:    #1e293b;
+  --active-bg:   rgba(37,99,235,0.15);
+}
+
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary selection:text-white min-h-screen overflow-hidden;
+    background-color: var(--bg);
+    color: var(--text);
+    @apply antialiased min-h-screen overflow-hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 }
 
-/* Custom scrollbar for modern look */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-secondary-light rounded-full;
-}
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-600;
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.35); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,0.60); }
+
+/* ── Sidebar (always dark, TalentLink style) ── */
+.sidebar {
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid rgba(255,255,255,0.06);
 }
 
-/* Premium Glassmorphism utility */
+/* ── Card / Panel ── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 0.75rem;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.card-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -10px rgba(37,99,235,0.25);
+  border-color: var(--border-blue) !important;
+}
+
+/* ── Glass (kept for chat bubbles) ── */
 .glass {
-  @apply bg-secondary/70 backdrop-blur-xl border border-white/5 shadow-2xl;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  transition: background 0.25s ease;
 }
 .glass-panel {
-  @apply bg-secondary-light/40 backdrop-blur-lg border border-white/10 shadow-lg;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  transition: background 0.25s ease;
 }
 
-/* Animated gradient background */
-.animated-bg {
-  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
-              radial-gradient(circle at bottom right, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
+/* ── Main content background ── */
+.main-bg {
+  background-color: var(--bg);
+  transition: background-color 0.25s ease;
 }
 
-/* Staggered animation delays */
+/* ── Blue primary button ── */
+.btn-primary {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  box-shadow: 0 6px 20px rgba(37,99,235,0.50);
+  transform: translateY(-1px);
+}
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Outline button ── */
+.btn-outline {
+  border: 1px solid rgba(37,99,235,0.40);
+  color: #2563eb;
+  background: var(--active-bg);
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.btn-outline:hover {
+  background: rgba(37,99,235,0.15);
+  border-color: #2563eb;
+}
+
+/* ── Input ── */
+.theme-input {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  transition: background 0.25s ease, border-color 0.2s ease;
+}
+.theme-input:focus {
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+
+/* ── Active sidebar item ── */
+.sidebar-active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-radius: 0.5rem;
+}
+.sidebar-item {
+  color: #94a3b8;
+  border-radius: 0.5rem;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.sidebar-item:hover { background: rgba(255,255,255,0.06); color: #f8fafc; }
+
+/* ── Shimmer text ── */
+.shimmer-text {
+  background: linear-gradient(90deg, #2563eb, #60a5fa, #2563eb);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ── Theme toggle ── */
+.theme-toggle {
+  width: 2rem; height: 2rem;
+  border-radius: 0.5rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, transform 0.2s;
+  color: #94a3b8;
+  cursor: pointer;
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.08); color: #f8fafc; transform: scale(1.1); }
+
+/* ── Stagger delays ── */
 .delay-100 { animation-delay: 100ms; }
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
 .delay-400 { animation-delay: 400ms; }
-.delay-500 { animation-delay: 500ms; }
-
