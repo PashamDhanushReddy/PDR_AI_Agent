@@ -1,0 +1,45 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary selection:text-white min-h-screen overflow-hidden;
+  }
+}
+
+/* Custom scrollbar for modern look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-secondary-light rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-600;
+}
+
+/* Premium Glassmorphism utility */
+.glass {
+  @apply bg-secondary/70 backdrop-blur-xl border border-white/5 shadow-2xl;
+}
+.glass-panel {
+  @apply bg-secondary-light/40 backdrop-blur-lg border border-white/10 shadow-lg;
+}
+
+/* Animated gradient background */
+.animated-bg {
+  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+              radial-gradient(circle at bottom right, rgba(139, 92, 246, 0.15) 0%, transparent 40%);
+}
+
+/* Staggered animation delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
