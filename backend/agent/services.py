@@ -74,17 +74,20 @@ def process_chat_message(user, conversation, content, **kwargs):
         if kwargs.get('stream', False):
             # Streaming implementation
             def stream_generator():
-                for chunk in app.stream({"messages": messages}, stream_mode="messages"):
-                    # Extract the content from AIMessageChunk
-                    # The chunk is a tuple if using stream_mode="messages"
-                    msg_chunk, _ = chunk
-                    if isinstance(msg_chunk, AIMessage) and msg_chunk.content:
-                        if isinstance(msg_chunk.content, list):
-                            text = "".join([c.get("text", "") if isinstance(c, dict) else str(c) for c in msg_chunk.content])
-                            if text:
-                                yield text
-                        else:
-                            yield str(msg_chunk.content)
+                try:
+                    for chunk in app.stream({"messages": messages}, stream_mode="messages"):
+                        # Extract the content from AIMessageChunk
+                        # The chunk is a tuple if using stream_mode="messages"
+                        msg_chunk, _ = chunk
+                        if isinstance(msg_chunk, AIMessage) and msg_chunk.content:
+                            if isinstance(msg_chunk.content, list):
+                                text = "".join([c.get("text", "") if isinstance(c, dict) else str(c) for c in msg_chunk.content])
+                                if text:
+                                    yield text
+                            else:
+                                yield str(msg_chunk.content)
+                except Exception as stream_err:
+                    yield f"\n[AI Error: {str(stream_err)}]"
             return stream_generator()
         else:
             response_state = app.invoke({"messages": messages})

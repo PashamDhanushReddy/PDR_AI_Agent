@@ -81,29 +81,34 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
         def event_stream():
             full_content = ""
-            for chunk in ai_response_generator:
-                full_content += chunk
-                # Server-Sent Events (SSE) format
-                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
-            
-            # Save final message and extract memory
-            ai_msg = Message.objects.create(
-                conversation=conversation,
-                role='assistant',
-                content=full_content
-            )
-            
-            # Extract Memories
-            import threading
-            from memory.extractor import extract_memories
-            from memory.manager import process_memory_actions
+            try:
+                for chunk in ai_response_generator:
+                    full_content += chunk
+                    # Server-Sent Events (SSE) format
+                    yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+                
+                # Save final message and extract memory
+                ai_msg = Message.objects.create(
+                    conversation=conversation,
+                    role='assistant',
+                    content=full_content
+                )
+                
+                # Extract Memories
+                import threading
+                from memory.extractor import extract_memories
+                from memory.manager import process_memory_actions
 
-            def extract_and_save():
-                actions = extract_memories(request.user, conversation, user_message_content)
-                if actions:
-                    process_memory_actions(request.user, actions, source_message=user_msg)
+                def extract_and_save():
+                    actions = extract_memories(request.user, conversation, user_message_content)
+                    if actions:
+                        process_memory_actions(request.user, actions, source_message=user_msg)
 
-            threading.Thread(target=extract_and_save).start()
+                threading.Thread(target=extract_and_save).start()
+                
+            except Exception as e:
+                error_msg = f"\n[Stream Error: {str(e)}]"
+                yield f"data: {json.dumps({'chunk': error_msg})}\n\n"
             
             yield "data: [DONE]\n\n"
 
