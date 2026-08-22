@@ -110,7 +110,7 @@ export default function ChatPage() {
         {/* Brand */}
         <div className="p-6 flex items-center justify-between border-b border-primary/10">
           <div className="flex items-center gap-3">
-            <img src="/pdr_logo.jpg" alt="PDR Logo" className="w-9 h-9 rounded-xl object-cover border border-primary/30 shadow-[0_0_12px_rgba(37,99,235,0.3)]" />
+            <img src={`${import.meta.env.BASE_URL}pdr_logo.jpg`} alt="PDR Logo" className="w-9 h-9 rounded-xl object-cover border border-primary/30 shadow-[0_0_12px_rgba(37,99,235,0.3)]" />
             <span className="font-black text-base shimmer-text tracking-tight">PDR AI AGENT</span>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 rounded-lg text-gray-600 hover:text-white hover:bg-white/5 transition-colors">
@@ -185,7 +185,7 @@ export default function ChatPage() {
           {!activeConversation || activeConversation.messages?.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-4 animate-fade-in-up">
               <div className="w-24 h-24 md:w-28 md:h-28 mb-6 md:mb-8 rounded-3xl overflow-hidden border border-primary/20 shadow-[0_0_60px_rgba(37,99,235,0.3)] animate-float">
-                <img src="/pdr_logo.jpg" alt="PDR AI Agent" className="w-full h-full object-cover" />
+                <img src={`${import.meta.env.BASE_URL}pdr_logo.jpg`} alt="PDR AI Agent" className="w-full h-full object-cover" />
               </div>
               <h2 className="text-3xl md:text-5xl font-black mb-3 md:mb-4 text-gray-800">PDR AI AGENT</h2>
               <p className="text-gray-500 text-base md:text-lg max-w-md leading-relaxed">
