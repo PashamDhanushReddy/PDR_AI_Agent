@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import ChatPage from './pages/ChatPage';
 import MemoryPage from './pages/MemoryPage';
@@ -12,7 +12,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <Router>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <div className="min-h-screen bg-background text-foreground">
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
@@ -27,7 +27,7 @@ function App() {
           <Route path="/" element={<Navigate to="/chat" />} />
         </Routes>
       </div>
-    </Router>
+    </BrowserRouter>
   );
 }
 
