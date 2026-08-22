@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Bot, ArrowRight, Sparkles, Zap, Brain } from 'lucide-react';
+import { Bot, ArrowRight, Sparkles, Zap, Brain, Eye, EyeOff } from 'lucide-react';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,12 +9,15 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError('');
+    setAuthError('');
     if (!isLogin && password !== confirmPassword) {
       setPasswordError('Passwords do not match.');
       return;
@@ -31,7 +34,7 @@ export default function AuthPage() {
       }
     } catch (error) {
       console.error(error);
-      alert('Authentication failed');
+      setAuthError(isLogin ? 'Invalid credential' : 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -116,39 +119,54 @@ export default function AuthPage() {
                   required
                 />
               </div>
-              <div className="space-y-1.5 group">
+              <div className="space-y-1.5 group relative">
                 <label className="text-sm font-medium text-gray-500 transition-colors group-focus-within:text-primary">Password</label>
-                <input
-                  id="auth-password"
-                  type="password"
-                  className="w-full px-5 py-3.5 bg-white rounded-xl border border-gray-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-gray-900 placeholder-gray-400 text-base"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {!isLogin && (
-                <div className="space-y-1.5 group">
-                  <label className="text-sm font-medium text-gray-500 transition-colors group-focus-within:text-primary">Confirm Password</label>
+                <div className="relative">
                   <input
-                    id="auth-confirm-password"
-                    type="password"
-                    className={`w-full px-5 py-3.5 bg-white rounded-xl border focus:outline-none focus:ring-2 transition-all text-gray-900 placeholder-gray-400 text-base ${
-                      passwordError
-                        ? 'border-red-500/60 focus:border-red-500 focus:ring-red-500/20'
-                        : 'border-gray-200 focus:border-primary/50 focus:ring-primary/20'
-                    }`}
+                    id="auth-password"
+                    type={showPassword ? "text" : "password"}
+                    className="w-full px-5 py-3.5 pr-12 bg-white rounded-xl border border-gray-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-gray-900 placeholder-gray-400 text-base"
                     placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setAuthError(''); }}
                     required
                   />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+              {!isLogin && (
+                <div className="space-y-1.5 group relative">
+                  <label className="text-sm font-medium text-gray-500 transition-colors group-focus-within:text-primary">Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      id="auth-confirm-password"
+                      type={showPassword ? "text" : "password"}
+                      className={`w-full px-5 py-3.5 pr-12 bg-white rounded-xl border focus:outline-none focus:ring-2 transition-all text-gray-900 placeholder-gray-400 text-base ${
+                        passwordError
+                          ? 'border-red-500/60 focus:border-red-500 focus:ring-red-500/20'
+                          : 'border-gray-200 focus:border-primary/50 focus:ring-primary/20'
+                      }`}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); setAuthError(''); }}
+                      required
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                   {passwordError && (
                     <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
                       <span>⚠</span> {passwordError}
                     </p>
                   )}
+                </div>
+              )}
+              {authError && (
+                <div className="p-3 bg-red-50 border border-red-100 rounded-lg animate-fade-in-up">
+                  <p className="text-sm text-red-600 font-medium text-center">{authError}</p>
                 </div>
               )}
               <button
