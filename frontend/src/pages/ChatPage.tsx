@@ -90,7 +90,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex overflow-hidden bg-background animated-bg" style={{ height: '100dvh' }}>
+    <div className="fixed inset-0 flex overflow-hidden bg-background animated-bg" style={{ height: '100dvh', width: '100vw' }}>
       {/* Orbs */}
       <div className="absolute pointer-events-none orb orb-red w-[400px] h-[400px] top-[-80px] left-[200px] opacity-10" />
       <div className="absolute pointer-events-none orb orb-dark w-[350px] h-[350px] bottom-[-60px] right-[100px] opacity-10" />
