@@ -90,7 +90,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-background animated-bg">
+    <div className="flex overflow-hidden bg-background animated-bg" style={{ height: '100dvh' }}>
       {/* Orbs */}
       <div className="absolute pointer-events-none orb orb-red w-[400px] h-[400px] top-[-80px] left-[200px] opacity-10" />
       <div className="absolute pointer-events-none orb orb-dark w-[350px] h-[350px] bottom-[-60px] right-[100px] opacity-10" />
@@ -289,7 +289,7 @@ export default function ChatPage() {
                 <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageChange} />
                 <input id="chat-input" type="text" value={input} onChange={(e) => setInput(e.target.value)}
                   placeholder="Message PDR AI AGENT..."
-                  className="flex-1 px-3 py-3.5 bg-transparent focus:outline-none text-gray-900 placeholder-gray-400 text-[15px] min-w-0"
+                  className="flex-1 px-3 py-3.5 bg-transparent focus:outline-none text-gray-900 placeholder-gray-400 text-base min-w-0"
                   disabled={isLoading} />
                 <button id="send-btn" type="submit" disabled={(!input.trim() && !imagePreview) || isLoading}
                   className="mr-2 my-1.5 p-2 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:hover:bg-primary rounded-full text-white transition-all shadow-sm flex items-center justify-center flex-shrink-0">
