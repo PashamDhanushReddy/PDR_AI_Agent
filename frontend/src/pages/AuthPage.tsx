@@ -109,7 +109,7 @@ export default function AuthPage() {
                 <input
                   id="auth-email"
                   type="email"
-                  className="w-full px-5 py-3.5 bg-white rounded-xl border border-gray-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-gray-900 placeholder-gray-400 text-sm"
+                  className="w-full px-5 py-3.5 bg-white rounded-xl border border-gray-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-gray-900 placeholder-gray-400 text-base"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -121,7 +121,7 @@ export default function AuthPage() {
                 <input
                   id="auth-password"
                   type="password"
-                  className="w-full px-5 py-3.5 bg-white rounded-xl border border-gray-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-gray-900 placeholder-gray-400 text-sm"
+                  className="w-full px-5 py-3.5 bg-white rounded-xl border border-gray-200 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-gray-900 placeholder-gray-400 text-base"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -134,7 +134,7 @@ export default function AuthPage() {
                   <input
                     id="auth-confirm-password"
                     type="password"
-                    className={`w-full px-5 py-3.5 bg-white rounded-xl border focus:outline-none focus:ring-2 transition-all text-gray-900 placeholder-gray-400 text-sm ${
+                    className={`w-full px-5 py-3.5 bg-white rounded-xl border focus:outline-none focus:ring-2 transition-all text-gray-900 placeholder-gray-400 text-base ${
                       passwordError
                         ? 'border-red-500/60 focus:border-red-500 focus:ring-red-500/20'
                         : 'border-gray-200 focus:border-primary/50 focus:ring-primary/20'
