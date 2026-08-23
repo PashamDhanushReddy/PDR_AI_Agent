@@ -296,10 +296,10 @@ export default function ChatPage() {
                         </button>
                       </div>
                     )}
-                    <div className={`relative group max-w-[85%] md:max-w-[75%] min-w-0 rounded-2xl px-5 py-3.5 shadow-sm ${
+                    <div className={`relative group max-w-[90%] md:max-w-[75%] min-w-0 rounded-2xl px-5 py-3.5 shadow-sm ${
                       msg.role === 'user' 
                         ? 'bg-primary text-white ml-auto' 
-                        : 'bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-800 text-gray-800 dark:text-gray-100 prose prose-sm md:prose-base prose-slate dark:prose-invert max-w-none break-words'
+                        : 'bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-800 text-gray-800 dark:text-gray-100 prose prose-sm md:prose-base prose-slate dark:prose-invert max-w-none break-words overflow-hidden'
                     }`}>
                       {attachedImage && (
                         <div className="mb-4 rounded-xl overflow-hidden max-w-sm border border-primary/20">
@@ -325,6 +325,15 @@ export default function ChatPage() {
                                     </div>
                                   ) : (
                                     <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm text-primary font-medium" {...props}>{children}</code>
+                                  );
+                                },
+                                table({ children, ...props }: any) {
+                                  return (
+                                    <div className="overflow-x-auto w-full my-4 rounded-lg border border-gray-100 dark:border-gray-800">
+                                      <table className="min-w-full m-0" {...props}>
+                                        {children}
+                                      </table>
+                                    </div>
                                   );
                                 }
                               }}
