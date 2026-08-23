@@ -40,6 +40,8 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [mobileActionsConvId, setMobileActionsConvId] = useState<string | null>(null);
+  const [mobileActionsMsgIdx, setMobileActionsMsgIdx] = useState<number | null>(null);
   const [settingsView, setSettingsView] = useState<'main' | 'password' | 'upload'>('main');
   const [passwordForm, setPasswordForm] = useState({ old: '', new: '', confirm: '', error: '', success: '', loading: false });
   const [uploadForm, setUploadForm] = useState({ file: null as File | null, error: '', success: '', loading: false });
@@ -217,8 +219,8 @@ export default function ChatPage() {
           {conversations.map((conv, idx) => (
             <div key={conv.id} className="relative group w-full flex items-center animate-slide-in-right" style={{ animationDelay: `${idx * 40}ms` }}>
               <button 
-                onClick={() => setActiveConversation(conv.id)}
-                {...createLongPressHandlers(() => deleteConversation(conv.id), 600)}
+                onClick={() => { setActiveConversation(conv.id); setMobileActionsConvId(null); setMobileActionsMsgIdx(null); }}
+                {...createLongPressHandlers(() => setMobileActionsConvId(conv.id), 600)}
                 className={`flex-1 flex items-center gap-3 text-left px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium pr-10 ${
                   activeConversationId === conv.id
                     ? 'bg-primary text-white shadow-[0_0_12px_rgba(37,99,235,0.25)]'
@@ -227,8 +229,10 @@ export default function ChatPage() {
                 <MessageSquare size={15} className={activeConversationId === conv.id ? 'text-primary/80' : 'text-gray-500'} />
                 <span className="truncate">{conv.title || 'New Conversation'}</span>
               </button>
-              <button onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
-                className={`absolute right-2 p-1.5 rounded-lg opacity-0 md:group-hover:opacity-100 transition-all hidden md:block ${
+              <button onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); setMobileActionsConvId(null); }}
+                className={`absolute right-2 p-1.5 rounded-lg transition-all ${
+                  mobileActionsConvId === conv.id ? 'opacity-100 block' : 'opacity-0 md:group-hover:opacity-100 hidden md:block'
+                } ${
                   activeConversationId === conv.id ? 'text-white hover:bg-white/20' : 'text-gray-500 hover:text-red-400 hover:bg-red-400/10'
                 }`}
                 title="Delete Chat">
@@ -252,8 +256,10 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* ── Main Area ── */}
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative bg-background dark:bg-dark-bg">
+      <div 
+        className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative bg-background dark:bg-dark-bg"
+        onClick={() => { setMobileActionsConvId(null); setMobileActionsMsgIdx(null); }}
+      >
         {/* ── App Header (Solid & Fixed) ── */}
         <div className="flex-none w-full z-20 shadow-sm border-b" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="h-14 md:h-16 w-full flex items-center justify-between px-4">
@@ -326,7 +332,7 @@ export default function ChatPage() {
                       </div>
                     )}
                     <div 
-                      {...(msg.role === 'user' ? createLongPressHandlers(() => { setInput(parsedText || ''); fileInputRef.current?.focus(); }, 600) : {})}
+                      {...(msg.role === 'user' ? createLongPressHandlers(() => setMobileActionsMsgIdx(idx), 600) : {})}
                       className={`relative group max-w-[90%] md:max-w-[75%] min-w-0 rounded-2xl px-5 py-3.5 shadow-sm ${
                       msg.role === 'user' 
                         ? 'bg-primary text-white ml-auto' 
@@ -378,8 +384,10 @@ export default function ChatPage() {
                       )}
                       {msg.role === 'user' && (
                         <button 
-                          onClick={() => { setInput(parsedText || ''); fileInputRef.current?.focus(); }}
-                          className="absolute -left-10 top-2 p-1.5 rounded-full bg-white dark:bg-gray-800 text-gray-400 opacity-0 md:group-hover:opacity-100 transition-all hover:text-primary shadow-sm border border-gray-100 dark:border-gray-700 hidden md:block"
+                          onClick={() => { setInput(parsedText || ''); fileInputRef.current?.focus(); setMobileActionsMsgIdx(null); }}
+                          className={`absolute -left-10 top-2 p-1.5 rounded-full bg-white dark:bg-gray-800 text-gray-400 transition-all hover:text-primary shadow-sm border border-gray-100 dark:border-gray-700 ${
+                            mobileActionsMsgIdx === idx ? 'opacity-100 block' : 'opacity-0 md:group-hover:opacity-100 hidden md:block'
+                          }`}
                           title="Copy to edit"
                         >
                           <Pencil size={14} />
