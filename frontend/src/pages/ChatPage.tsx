@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Send, Menu, Plus, MessageSquare, X, Sparkles, LogOut, Settings, Moon, Lock, UploadCloud, ArrowRight, Mic, MicOff, Volume2, VolumeX, Trash2, Pencil } from 'lucide-react';
@@ -7,6 +7,34 @@ import remarkGfm from 'remark-gfm';
 import { useChatStore } from '../store/chatStore';
 import { useTheme } from '../hooks/useTheme';
 import { useVoice } from '../hooks/useVoice';
+
+const useLongPress = (callback: () => void, ms: number = 500) => {
+  const timeout = useRef<ReturnType<typeof setTimeout>>();
+
+  const start = useCallback(() => {
+    timeout.current = setTimeout(() => {
+      callback();
+      // Vibrate if supported to provide haptic feedback
+      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+      }
+    }, ms);
+  }, [callback, ms]);
+
+  const clear = useCallback(() => {
+    if (timeout.current) {
+      clearTimeout(timeout.current);
+    }
+  }, []);
+
+  return {
+    onMouseDown: start,
+    onMouseUp: clear,
+    onMouseLeave: clear,
+    onTouchStart: start,
+    onTouchEnd: clear,
+  };
+};
 
 export default function ChatPage() {
   const [input, setInput] = useState('');
@@ -189,7 +217,9 @@ export default function ChatPage() {
         <div className="flex-1 overflow-y-auto px-3 space-y-1 mt-1">
           {conversations.map((conv, idx) => (
             <div key={conv.id} className="relative group w-full flex items-center animate-slide-in-right" style={{ animationDelay: `${idx * 40}ms` }}>
-              <button onClick={() => setActiveConversation(conv.id)}
+              <button 
+                onClick={() => setActiveConversation(conv.id)}
+                {...useLongPress(() => deleteConversation(conv.id), 600)}
                 className={`flex-1 flex items-center gap-3 text-left px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium pr-10 ${
                   activeConversationId === conv.id
                     ? 'bg-primary text-white shadow-[0_0_12px_rgba(37,99,235,0.25)]'
@@ -199,7 +229,7 @@ export default function ChatPage() {
                 <span className="truncate">{conv.title || 'New Conversation'}</span>
               </button>
               <button onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
-                className={`absolute right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${
+                className={`absolute right-2 p-1.5 rounded-lg opacity-0 md:group-hover:opacity-100 transition-all hidden md:block ${
                   activeConversationId === conv.id ? 'text-white hover:bg-white/20' : 'text-gray-500 hover:text-red-400 hover:bg-red-400/10'
                 }`}
                 title="Delete Chat">
@@ -296,7 +326,9 @@ export default function ChatPage() {
                         </button>
                       </div>
                     )}
-                    <div className={`relative group max-w-[90%] md:max-w-[75%] min-w-0 rounded-2xl px-5 py-3.5 shadow-sm ${
+                    <div 
+                      {...(msg.role === 'user' ? useLongPress(() => { setInput(parsedText || ''); fileInputRef.current?.focus(); }, 600) : {})}
+                      className={`relative group max-w-[90%] md:max-w-[75%] min-w-0 rounded-2xl px-5 py-3.5 shadow-sm ${
                       msg.role === 'user' 
                         ? 'bg-primary text-white ml-auto' 
                         : 'bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-800 text-gray-800 dark:text-gray-100 prose prose-sm md:prose-base prose-slate dark:prose-invert max-w-none break-words overflow-hidden'
@@ -348,7 +380,7 @@ export default function ChatPage() {
                       {msg.role === 'user' && (
                         <button 
                           onClick={() => { setInput(parsedText || ''); fileInputRef.current?.focus(); }}
-                          className="absolute -left-10 top-2 p-1.5 rounded-full bg-white dark:bg-gray-800 text-gray-400 opacity-0 group-hover:opacity-100 transition-all hover:text-primary shadow-sm border border-gray-100 dark:border-gray-700"
+                          className="absolute -left-10 top-2 p-1.5 rounded-full bg-white dark:bg-gray-800 text-gray-400 opacity-0 md:group-hover:opacity-100 transition-all hover:text-primary shadow-sm border border-gray-100 dark:border-gray-700 hidden md:block"
                           title="Copy to edit"
                         >
                           <Pencil size={14} />
