@@ -8,7 +8,7 @@ def get_chat_model():
     api_key = settings.GEMINI_API_KEY if hasattr(settings, 'GEMINI_API_KEY') else 'dummy_key'
     return ChatGoogleGenerativeAI(
         api_key=api_key,
-        model="gemini-1.5-pro",
+        model="gemini-1.5-pro-latest",
         temperature=0.7
     )
 
