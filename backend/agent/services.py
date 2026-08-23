@@ -32,7 +32,14 @@ def process_chat_message(user, conversation, content, **kwargs):
         memory_context = "\n\nRelevant information about the user:\n" + "\n".join([f"- {m}" for m in memories])
     
     # Build System Message with Memory Context
-    system_prompt = SystemMessage(content=f"You are PDR AI AGENT, a helpful and highly intelligent AI assistant developed by Pasham Dhanush Reddy. If asked who created you, developed you, or who your maker is, you must state that you were developed by Pasham Dhanush Reddy. If the user asks questions about Pasham Dhanush Reddy, his work, or his projects, please share and refer them to his portfolio: https://pashamdhanushreddy.github.io/E-Portfolio/ .{memory_context}")
+    system_prompt_text = (
+        "You are PDR AI AGENT, a helpful and highly intelligent AI assistant developed by Pasham Dhanush Reddy. "
+        "If asked who created you, developed you, or who your maker is, you must state that you were developed by Pasham Dhanush Reddy. "
+        "If the user asks questions about Pasham Dhanush Reddy, his work, or his projects, please share and refer them to his portfolio: https://pashamdhanushreddy.github.io/E-Portfolio/ . "
+        "CRITICAL: Do NOT output your internal thinking process, reasoning steps, or internal monologues to the user (e.g. do not output 'Here's a thinking process'). Only output the final, direct conversational response."
+        f"{memory_context}"
+    )
+    system_prompt = SystemMessage(content=system_prompt_text)
     
     messages = [system_prompt]
     
@@ -70,12 +77,21 @@ def process_chat_message(user, conversation, content, **kwargs):
     messages.append(HumanMessage(content=current_parsed))
     
     from .graph import app
+    
+    # Pass user and conversation into config for ModelOrchestrator
+    run_config = {
+        "configurable": {
+            "user": user,
+            "conversation": conversation
+        }
+    }
+    
     try:
         if kwargs.get('stream', False):
             # Streaming implementation
             def stream_generator():
                 try:
-                    for chunk in app.stream({"messages": messages}, stream_mode="messages"):
+                    for chunk in app.stream({"messages": messages}, config=run_config, stream_mode="messages"):
                         # Extract the content from AIMessageChunk
                         # The chunk is a tuple if using stream_mode="messages"
                         msg_chunk, _ = chunk
@@ -87,13 +103,16 @@ def process_chat_message(user, conversation, content, **kwargs):
                             else:
                                 yield str(msg_chunk.content)
                 except Exception as stream_err:
-                    yield f"\n[AI Error: {str(stream_err)}]"
+                    print(f"Streaming Error: {str(stream_err)}")  # Log internally for debugging
+                    yield "\n[Error: Unable to fetch details from the agent at this moment.]"
             return stream_generator()
         else:
-            response_state = app.invoke({"messages": messages})
+            response_state = app.invoke({"messages": messages}, config=run_config)
             final_message = response_state["messages"][-1]
             return final_message.content
     except Exception as e:
+        print(f"AI Invocation Error: {str(e)}")  # Log internally for debugging
+        error_msg = "[Error: Unable to fetch details from the agent at this moment.]"
         if kwargs.get('stream', False):
-            return (chunk for chunk in [f"Error connecting to AI: {str(e)}"])
-        return f"Error connecting to AI: {str(e)}"
+            return (chunk for chunk in [error_msg])
+        return error_msg

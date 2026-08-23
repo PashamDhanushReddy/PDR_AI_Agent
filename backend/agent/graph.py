@@ -43,10 +43,14 @@ tool_node = ToolNode(tools)
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
 
-def call_model(state: AgentState):
+from langchain_core.runnables import RunnableConfig
+
+def call_model(state: AgentState, config: RunnableConfig = None):
     messages = state['messages']
-    model = get_chat_model().bind_tools(tools)
-    response = model.invoke(messages)
+    
+    from .orchestrator import ModelOrchestrator
+    response = ModelOrchestrator.execute(messages, tools, config=config)
+    
     return {"messages": [response]}
 
 # Define the graph

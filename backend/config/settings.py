@@ -35,6 +35,19 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+NVIDIA_API_KEY = os.environ.get('NVIDIA_API_KEY')
+
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-pro')
+OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-4o-mini')
+NVIDIA_MODEL = os.environ.get('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct')
+
+MODEL_FALLBACK_ORDER = os.environ.get('MODEL_FALLBACK_ORDER', 'gemini,openai,nvidia')
+CHAT_MODEL_PROVIDER = os.environ.get('CHAT_MODEL_PROVIDER', 'auto')
+MEMORY_MODEL_PROVIDER = os.environ.get('MEMORY_MODEL_PROVIDER', 'auto')
+ALLOW_MODEL_FALLBACK = os.environ.get('ALLOW_MODEL_FALLBACK', 'true').lower() == 'true'
+
+MAX_MODEL_RETRIES = int(os.environ.get('MAX_MODEL_RETRIES', 1))
+MODEL_TIMEOUT = int(os.environ.get('MODEL_TIMEOUT', 30))
 
 # Application definition
 

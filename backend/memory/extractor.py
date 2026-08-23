@@ -48,10 +48,28 @@ def extract_memories(user, conversation, current_message_content):
         HumanMessage(content=f"Conversation:\n{chat_history}\nExtract memories.")
     ]
     
-    llm = get_chat_model()
+    from agent.orchestrator import ModelOrchestrator
+    from django.conf import settings
+    
+    # Optional context config for the orchestrator to log memory extraction correctly
+    run_config = {
+        "configurable": {
+            "user": user,
+            "conversation": conversation
+        }
+    }
+    
     try:
-        response = llm.invoke(messages)
-        content = response.content.strip()
+        if getattr(settings, 'MEMORY_MODEL_PROVIDER', 'auto').lower() == 'auto':
+            # Use Orchestrator for fallback and tracking
+            response = ModelOrchestrator.execute(messages, tools=None, config=run_config)
+            content = response.content.strip()
+        else:
+            # Direct usage if specifically disabled for memory
+            llm = get_chat_model()
+            response = llm.invoke(messages)
+            content = response.content.strip()
+            
         if content.startswith("```json"):
             content = content.replace("```json", "").replace("```", "").strip()
         elif content.startswith("```"):
@@ -61,3 +79,4 @@ def extract_memories(user, conversation, current_message_content):
     except Exception as e:
         print(f"Memory extraction error: {e}")
         return []
+
