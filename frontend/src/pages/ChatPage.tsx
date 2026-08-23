@@ -8,24 +8,23 @@ import { useChatStore } from '../store/chatStore';
 import { useTheme } from '../hooks/useTheme';
 import { useVoice } from '../hooks/useVoice';
 
-const useLongPress = (callback: () => void, ms: number = 500) => {
-  const timeout = useRef<ReturnType<typeof setTimeout>>();
+const createLongPressHandlers = (callback: () => void, ms: number = 500) => {
+  let timeoutId: ReturnType<typeof setTimeout>;
 
-  const start = useCallback(() => {
-    timeout.current = setTimeout(() => {
+  const start = () => {
+    timeoutId = setTimeout(() => {
       callback();
-      // Vibrate if supported to provide haptic feedback
       if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(50);
       }
     }, ms);
-  }, [callback, ms]);
+  };
 
-  const clear = useCallback(() => {
-    if (timeout.current) {
-      clearTimeout(timeout.current);
+  const clear = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
     }
-  }, []);
+  };
 
   return {
     onMouseDown: start,
@@ -219,7 +218,7 @@ export default function ChatPage() {
             <div key={conv.id} className="relative group w-full flex items-center animate-slide-in-right" style={{ animationDelay: `${idx * 40}ms` }}>
               <button 
                 onClick={() => setActiveConversation(conv.id)}
-                {...useLongPress(() => deleteConversation(conv.id), 600)}
+                {...createLongPressHandlers(() => deleteConversation(conv.id), 600)}
                 className={`flex-1 flex items-center gap-3 text-left px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium pr-10 ${
                   activeConversationId === conv.id
                     ? 'bg-primary text-white shadow-[0_0_12px_rgba(37,99,235,0.25)]'
@@ -327,7 +326,7 @@ export default function ChatPage() {
                       </div>
                     )}
                     <div 
-                      {...(msg.role === 'user' ? useLongPress(() => { setInput(parsedText || ''); fileInputRef.current?.focus(); }, 600) : {})}
+                      {...(msg.role === 'user' ? createLongPressHandlers(() => { setInput(parsedText || ''); fileInputRef.current?.focus(); }, 600) : {})}
                       className={`relative group max-w-[90%] md:max-w-[75%] min-w-0 rounded-2xl px-5 py-3.5 shadow-sm ${
                       msg.role === 'user' 
                         ? 'bg-primary text-white ml-auto' 
