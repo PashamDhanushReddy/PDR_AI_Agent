@@ -4,7 +4,7 @@ import axios from 'axios';
 import { ArrowLeft, Bot, Trash2, Tag, Clock, Sparkles, LogOut } from 'lucide-react';
 
 interface Memory {
-  id: number;
+  id: string;
   content: string;
   category: string;
   importance: number;
@@ -25,9 +25,16 @@ export default function MemoryPage() {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/memories/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMemories(res.data);
+      if (Array.isArray(res.data)) {
+        setMemories(res.data);
+      } else if (res.data && Array.isArray(res.data.results)) {
+        setMemories(res.data.results);
+      } else {
+        setMemories([]);
+      }
     } catch (e) {
       console.error(e);
+      setMemories([]);
     } finally {
       setIsLoading(false);
     }
@@ -42,14 +49,14 @@ export default function MemoryPage() {
     navigate('/auth');
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       const token = localStorage.getItem('access_token');
       await axios.patch(`${import.meta.env.VITE_API_URL}/memories/${id}/`,
         { status: 'inactive' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMemories(memories.filter(m => m.id !== id));
+      setMemories((prev) => prev.filter(m => m.id !== id));
     } catch (e) {
       console.error('Failed to delete memory', e);
     }

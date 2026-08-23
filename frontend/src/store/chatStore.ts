@@ -20,6 +20,7 @@ interface ChatState {
   setConversations: (conversations: Conversation[]) => void;
   setActiveConversation: (id: string | null) => void;
   sendMessage: (content: string, imageBase64?: string) => Promise<void>;
+  deleteConversation: (id: string) => Promise<void>;
 }
 
 const api = axios.create({
@@ -48,6 +49,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
       sessionStorage.removeItem('activeConversationId');
     }
     set({ activeConversationId: id });
+  },
+
+  deleteConversation: async (id: string) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      await api.delete(`/conversations/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      set((state) => {
+        const remaining = state.conversations.filter(c => c.id !== id);
+        const nextActive = state.activeConversationId === id ? null : state.activeConversationId;
+        if (!nextActive) {
+            sessionStorage.removeItem('activeConversationId');
+        }
+        return { 
+          conversations: remaining,
+          activeConversationId: nextActive
+        };
+      });
+    } catch (e) {
+      console.error('Failed to delete conversation', e);
+    }
   },
 
   sendMessage: async (content: string, imageBase64?: string) => {

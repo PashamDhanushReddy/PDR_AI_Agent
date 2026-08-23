@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Send, Menu, Plus, User as UserIcon, Bot, MessageSquare, X, Sparkles, LogOut, Settings, Moon, Lock, UploadCloud, ArrowRight } from 'lucide-react';
+import { Send, Menu, Plus, User as UserIcon, Bot, MessageSquare, X, Sparkles, LogOut, Settings, Moon, Lock, UploadCloud, ArrowRight, Mic, MicOff, Volume2, VolumeX, Trash2, Pencil } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChatStore } from '../store/chatStore';
 import { useTheme } from '../hooks/useTheme';
+import { useVoice } from '../hooks/useVoice';
 
 export default function ChatPage() {
   const [input, setInput] = useState('');
@@ -19,8 +20,17 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { conversations, activeConversationId, isLoading, setConversations, setActiveConversation, sendMessage } = useChatStore();
+  const { conversations, activeConversationId, isLoading, setConversations, setActiveConversation, sendMessage, deleteConversation } = useChatStore();
   const navigate = useNavigate();
+
+  const handleVoiceInput = (text: string) => {
+    setInput(prev => {
+      const separator = prev && !prev.endsWith(' ') ? ' ' : '';
+      return prev + separator + text;
+    });
+  };
+
+  const { isListening, toggleListening, speakMessage, speakingMessageId } = useVoice(handleVoiceInput);
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -178,26 +188,30 @@ export default function ChatPage() {
         {/* Conversations */}
         <div className="flex-1 overflow-y-auto px-3 space-y-1 mt-1">
           {conversations.map((conv, idx) => (
-            <button key={conv.id} onClick={() => setActiveConversation(conv.id)}
-              className={`w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl transition-all duration-200 animate-slide-in-right text-sm font-medium ${
-                activeConversationId === conv.id
-                  ? 'bg-primary text-white shadow-[0_0_12px_rgba(37,99,235,0.25)]'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-gray-200 border border-transparent'
-              }`}
-              style={{ animationDelay: `${idx * 40}ms` }}>
-              <MessageSquare size={15} className={activeConversationId === conv.id ? 'text-primary' : 'text-gray-700'} />
-              <span className="truncate">{conv.title || 'New Conversation'}</span>
-            </button>
+            <div key={conv.id} className="relative group w-full flex items-center animate-slide-in-right" style={{ animationDelay: `${idx * 40}ms` }}>
+              <button onClick={() => setActiveConversation(conv.id)}
+                className={`flex-1 flex items-center gap-3 text-left px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium pr-10 ${
+                  activeConversationId === conv.id
+                    ? 'bg-primary text-white shadow-[0_0_12px_rgba(37,99,235,0.25)]'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200 border border-transparent'
+                }`}>
+                <MessageSquare size={15} className={activeConversationId === conv.id ? 'text-primary/80' : 'text-gray-500'} />
+                <span className="truncate">{conv.title || 'New Conversation'}</span>
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
+                className={`absolute right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${
+                  activeConversationId === conv.id ? 'text-white hover:bg-white/20' : 'text-gray-500 hover:text-red-400 hover:bg-red-400/10'
+                }`}
+                title="Delete Chat">
+                <Trash2 size={15} />
+              </button>
+            </div>
           ))}
         </div>
 
         {/* Footer */}
         <div className="p-4 border-t border-primary/10 space-y-1">
-          <Link to="/memory" className="flex items-center gap-3 text-gray-600 hover:text-white p-3 rounded-xl hover:bg-white/5 transition-all group">
-            <UserIcon size={18} className="text-primary/70 group-hover:text-primary transition-colors" />
-            <span className="text-sm font-medium">Manage Memory</span>
-            <Sparkles size={14} className="ml-auto text-primary/30 group-hover:text-primary/70 transition-colors" />
-          </Link>
+
           <button onClick={() => { setSettingsView('main'); setSettingsOpen(true); }} className="w-full flex items-center gap-3 text-gray-600 hover:text-white p-3 rounded-xl hover:bg-white/5 transition-all group">
             <Settings size={18} className="text-gray-500 group-hover:text-gray-300 transition-colors" />
             <span className="text-sm font-medium">Settings</span>
@@ -210,7 +224,7 @@ export default function ChatPage() {
       </div>
 
       {/* ── Main Area ── */}
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative bg-background">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden relative bg-background dark:bg-dark-bg">
         {/* ── App Header (Solid & Fixed) ── */}
         <div className="flex-none w-full z-20 shadow-sm border-b" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', paddingTop: 'env(safe-area-inset-top)' }}>
           <div className="h-14 md:h-16 w-full flex items-center justify-between px-4">
@@ -225,7 +239,7 @@ export default function ChatPage() {
           
           {/* Center: App Title */}
           <div className="flex-1 flex justify-center">
-            <span className="font-semibold text-gray-800 flex items-center gap-2 text-sm md:text-base tracking-wide">
+            <span className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 text-sm md:text-base tracking-wide">
               PDR AI AGENT <Sparkles size={14} className="text-primary/70" />
             </span>
           </div>
@@ -246,7 +260,7 @@ export default function ChatPage() {
               <div className="w-24 h-24 md:w-28 md:h-28 mb-6 md:mb-8 rounded-3xl overflow-hidden border border-primary/20 shadow-[0_0_60px_rgba(37,99,235,0.3)] animate-float">
                 <img src={`${import.meta.env.BASE_URL}pdr_logo.jpg`} alt="PDR AI Agent" className="w-full h-full object-cover" />
               </div>
-              <h2 className="text-3xl md:text-5xl font-black mb-3 md:mb-4 text-gray-800">PDR AI AGENT</h2>
+              <h2 className="text-3xl md:text-5xl font-black mb-3 md:mb-4 text-gray-800 dark:text-gray-100">PDR AI AGENT</h2>
               <p className="text-gray-500 text-base md:text-lg max-w-md leading-relaxed">
                 Your intelligent assistant with <span className="text-primary font-semibold">long-term memory</span>. Ask me anything.
               </p>
@@ -271,14 +285,21 @@ export default function ChatPage() {
                 return (
                   <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-message-pop`} style={{ animationDelay: '40ms' }}>
                     {msg.role === 'assistant' && (
-                      <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center mr-3 mt-1 flex-shrink-0">
-                        <Bot size={16} className="text-primary" />
+                      <div className="flex flex-col items-center mr-3 mt-1 flex-shrink-0 gap-2">
+                        <img src={`${import.meta.env.BASE_URL}pdr_logo.jpg`} alt="AI Logo" className="w-8 h-8 rounded-full object-cover border border-primary/30 shadow-sm" />
+                        <button 
+                          onClick={() => speakMessage(parsedText || '', idx)}
+                          className={`p-1.5 rounded-full transition-colors ${speakingMessageId === idx ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700'}`}
+                          title="Read aloud"
+                        >
+                          {speakingMessageId === idx ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                        </button>
                       </div>
                     )}
-                    <div className={`max-w-[85%] md:max-w-[75%] min-w-0 rounded-2xl px-5 py-3.5 shadow-sm ${
+                    <div className={`relative group max-w-[85%] md:max-w-[75%] min-w-0 rounded-2xl px-5 py-3.5 shadow-sm ${
                       msg.role === 'user' 
                         ? 'bg-primary text-white ml-auto' 
-                        : 'bg-white border border-gray-100 text-gray-800 prose prose-sm md:prose-base prose-slate max-w-none break-words'
+                        : 'bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-800 text-gray-800 dark:text-gray-100 prose prose-sm md:prose-base prose-slate dark:prose-invert max-w-none break-words'
                     }`}>
                       {attachedImage && (
                         <div className="mb-4 rounded-xl overflow-hidden max-w-sm border border-primary/20">
@@ -315,6 +336,15 @@ export default function ChatPage() {
                           <span className="w-2 h-2 bg-primary rounded-full animate-bounce delay-200" />
                         </span>
                       )}
+                      {msg.role === 'user' && (
+                        <button 
+                          onClick={() => { setInput(parsedText || ''); fileInputRef.current?.focus(); }}
+                          className="absolute -left-10 top-2 p-1.5 rounded-full bg-white dark:bg-gray-800 text-gray-400 opacity-0 group-hover:opacity-100 transition-all hover:text-primary shadow-sm border border-gray-100 dark:border-gray-700"
+                          title="Copy to edit"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -325,7 +355,7 @@ export default function ChatPage() {
         </div>
 
         {/* ── Input Area ── */}
-        <div className="flex-none px-4 pb-4 pt-2 md:px-8 md:pb-6 bg-background">
+        <div className="flex-none px-4 pb-4 pt-2 md:px-8 md:pb-6 bg-background dark:bg-dark-bg">
           <div className="max-w-4xl mx-auto">
             {imagePreview && (
               <div className="mb-4 relative inline-block animate-fade-in-up">
@@ -340,7 +370,7 @@ export default function ChatPage() {
             )}
             <form onSubmit={handleSend} className="relative group">
               <div className="absolute -inset-0.5 bg-primary rounded-full opacity-5 group-focus-within:opacity-10 transition duration-500 blur-sm" />
-              <div className="relative flex items-center bg-white border border-gray-200 group-focus-within:border-primary/30 rounded-full transition-all shadow-md overflow-hidden">
+              <div className="relative flex items-center bg-white dark:bg-dark-card border border-gray-200 dark:border-gray-800 group-focus-within:border-primary/30 rounded-full transition-all shadow-md overflow-hidden">
                 <button type="button" id="attach-image-btn" onClick={() => fileInputRef.current?.click()}
                   className="ml-2 p-2.5 text-gray-500 hover:text-primary transition-colors rounded-full flex-shrink-0">
                   <Plus size={22} />
@@ -348,8 +378,13 @@ export default function ChatPage() {
                 <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageChange} />
                 <input id="chat-input" type="text" value={input} onChange={(e) => setInput(e.target.value)}
                   placeholder="Message PDR AI AGENT..."
-                  className="flex-1 px-3 py-3.5 bg-transparent focus:outline-none text-gray-900 placeholder-gray-400 text-base min-w-0"
+                  className="flex-1 px-3 py-3.5 bg-transparent focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 text-base min-w-0"
                   disabled={isLoading} />
+                <button type="button" onClick={toggleListening}
+                  className={`mr-1 p-2.5 rounded-full transition-colors flex-shrink-0 ${isListening ? 'text-red-500 bg-red-50 hover:bg-red-100 animate-pulse' : 'text-gray-400 hover:text-primary hover:bg-gray-50'}`}
+                  title={isListening ? "Stop listening" : "Start Voice Input"}>
+                  {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                </button>
                 <button id="send-btn" type="submit" disabled={(!input.trim() && !imagePreview) || isLoading}
                   className="mr-2 my-1.5 p-2 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:hover:bg-primary rounded-full text-white transition-all shadow-sm flex items-center justify-center flex-shrink-0">
                   <Send size={16} className={isLoading ? 'animate-pulse' : 'ml-0.5'} />
@@ -366,14 +401,14 @@ export default function ChatPage() {
       {/* ── Settings Modal ── */}
       {settingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-slide-in-up">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <div className="bg-white dark:bg-dark-card rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-slide-in-up border dark:border-gray-800">
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-800">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 {settingsView === 'main' ? <><Settings size={20} className="text-primary" /> Settings</> : null}
                 {settingsView === 'password' ? <><Lock size={20} className="text-red-500" /> Change Password</> : null}
                 {settingsView === 'upload' ? <><UploadCloud size={20} className="text-blue-500" /> Upload Memory</> : null}
               </h2>
-              <button onClick={() => setSettingsOpen(false)} className="text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 p-1.5 rounded-lg transition-colors">
+              <button onClick={() => setSettingsOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 p-1.5 rounded-lg transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -381,40 +416,40 @@ export default function ChatPage() {
             {settingsView === 'main' && (
               <div className="p-4 space-y-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Appearance</label>
-                  <button onClick={toggleTheme} className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Appearance</label>
+                  <button onClick={toggleTheme} className="w-full flex items-center justify-between p-3 rounded-xl border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
-                        <Moon size={16} className="text-gray-600" />
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-white dark:group-hover:bg-gray-700 group-hover:shadow-sm transition-all">
+                        <Moon size={16} className="text-gray-600 dark:text-gray-300" />
                       </div>
-                      <span className="font-medium text-gray-700">Toggle Dark Mode</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-200">Toggle Dark Mode</span>
                     </div>
                   </button>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Account</label>
-                  <button onClick={() => setSettingsView('password')} className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Account</label>
+                  <button onClick={() => setSettingsView('password')} className="w-full flex items-center justify-between p-3 rounded-xl border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                      <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center group-hover:bg-white dark:group-hover:bg-gray-700 group-hover:shadow-sm transition-all">
                         <Lock size={16} className="text-red-500" />
                       </div>
-                      <span className="font-medium text-gray-700">Change Password</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-200">Change Password</span>
                     </div>
-                    <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+                    <ArrowRight size={16} className="text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
                   </button>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Data & Memory</label>
-                  <button onClick={() => setSettingsView('upload')} className="w-full flex items-center justify-between p-3 rounded-xl border hover:bg-gray-50 transition-colors group">
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data & Memory</label>
+                  <button onClick={() => setSettingsView('upload')} className="w-full flex items-center justify-between p-3 rounded-xl border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center group-hover:bg-white dark:group-hover:bg-gray-700 group-hover:shadow-sm transition-all">
                         <UploadCloud size={16} className="text-blue-500" />
                       </div>
-                      <span className="font-medium text-gray-700">Upload Memory Files</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-200">Upload Memory Files</span>
                     </div>
-                    <ArrowRight size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
+                    <ArrowRight size={16} className="text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
                   </button>
                 </div>
               </div>
@@ -422,13 +457,13 @@ export default function ChatPage() {
 
             {settingsView === 'password' && (
               <form onSubmit={handleChangePassword} className="p-4 space-y-4">
-                <input type="password" required placeholder="Old Password" value={passwordForm.old} onChange={(e) => setPasswordForm(p => ({ ...p, old: e.target.value, error: '', success: '' }))} className="w-full px-4 py-3 rounded-xl border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 outline-none" />
-                <input type="password" required placeholder="New Password" value={passwordForm.new} onChange={(e) => setPasswordForm(p => ({ ...p, new: e.target.value, error: '', success: '' }))} className="w-full px-4 py-3 rounded-xl border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 outline-none" />
-                <input type="password" required placeholder="Confirm New Password" value={passwordForm.confirm} onChange={(e) => setPasswordForm(p => ({ ...p, confirm: e.target.value, error: '', success: '' }))} className="w-full px-4 py-3 rounded-xl border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary/20 outline-none" />
+                <input type="password" required placeholder="Old Password" value={passwordForm.old} onChange={(e) => setPasswordForm(p => ({ ...p, old: e.target.value, error: '', success: '' }))} className="w-full px-4 py-3 rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-primary/20 outline-none text-gray-900 dark:text-white" />
+                <input type="password" required placeholder="New Password" value={passwordForm.new} onChange={(e) => setPasswordForm(p => ({ ...p, new: e.target.value, error: '', success: '' }))} className="w-full px-4 py-3 rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-primary/20 outline-none text-gray-900 dark:text-white" />
+                <input type="password" required placeholder="Confirm New Password" value={passwordForm.confirm} onChange={(e) => setPasswordForm(p => ({ ...p, confirm: e.target.value, error: '', success: '' }))} className="w-full px-4 py-3 rounded-xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-primary/20 outline-none text-gray-900 dark:text-white" />
                 {passwordForm.error && <p className="text-red-500 text-sm">{passwordForm.error}</p>}
                 {passwordForm.success && <p className="text-green-600 text-sm">{passwordForm.success}</p>}
                 <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setSettingsView('main')} className="flex-1 py-3 text-gray-600 font-medium rounded-xl hover:bg-gray-100 transition-colors">Back</button>
+                  <button type="button" onClick={() => setSettingsView('main')} className="flex-1 py-3 text-gray-600 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Back</button>
                   <button type="submit" disabled={passwordForm.loading} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50">
                     {passwordForm.loading ? 'Updating...' : 'Update Password'}
                   </button>
@@ -438,10 +473,10 @@ export default function ChatPage() {
 
             {settingsView === 'upload' && (
               <form onSubmit={handleUploadMemory} className="p-4 space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 transition-colors relative">
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors relative">
                   <input type="file" accept=".txt,.pdf,.csv" onChange={(e) => setUploadForm(p => ({ ...p, file: e.target.files?.[0] || null, error: '', success: '' }))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                   <UploadCloud size={32} className="text-blue-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-700">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {uploadForm.file ? uploadForm.file.name : "Tap to select or drop a file"}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">Supports TXT, PDF (Max 5MB)</p>
@@ -449,7 +484,7 @@ export default function ChatPage() {
                 {uploadForm.error && <p className="text-red-500 text-sm">{uploadForm.error}</p>}
                 {uploadForm.success && <p className="text-green-600 text-sm">{uploadForm.success}</p>}
                 <div className="flex gap-2 pt-2">
-                  <button type="button" onClick={() => setSettingsView('main')} className="flex-1 py-3 text-gray-600 font-medium rounded-xl hover:bg-gray-100 transition-colors">Back</button>
+                  <button type="button" onClick={() => setSettingsView('main')} className="flex-1 py-3 text-gray-600 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Back</button>
                   <button type="submit" disabled={uploadForm.loading || !uploadForm.file} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50">
                     {uploadForm.loading ? 'Extracting...' : 'Upload & Extract'}
                   </button>
@@ -457,8 +492,8 @@ export default function ChatPage() {
               </form>
             )}
 
-            <div className="p-4 border-t bg-gray-50">
-              <p className="text-xs text-center text-gray-500">
+            <div className="p-4 border-t dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30">
+              <p className="text-xs text-center text-gray-500 dark:text-gray-400">
                 PDR AI AGENT • Built by Pasham Dhanush Reddy
               </p>
             </div>
