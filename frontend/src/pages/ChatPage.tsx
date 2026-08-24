@@ -318,18 +318,24 @@ export default function ChatPage() {
                 let attachedImage = null;
                 let isGeneratingImage = false;
                 try {
-                  const data = JSON.parse(msg.content);
+                  let jsonString = msg.content;
+                  const match = msg.content.match(/\{[\s\n]*"type"[\s\n]*:[\s\n]*"image"/);
+                  if (match && match.index !== undefined) {
+                      jsonString = msg.content.substring(match.index);
+                  }
+
+                  const data = JSON.parse(jsonString);
                   if (data.type === 'image' && data.image) {
                       attachedImage = data.image;
-                      parsedText = `*Generated using ${data.model || 'Cloudflare AI'}*\n\n**Prompt:** ${data.prompt || ''}`;
+                      parsedText = ''; // Hide any prefix text
                   } else if (data.text !== undefined && data.image) { 
                       parsedText = data.text; 
                       attachedImage = data.image; 
                   }
                 } catch (_) {
-                  // If JSON parsing fails (e.g. while streaming), check if it's the start of our image JSON
-                  const trimmed = msg.content.trim().replace(/\s/g, '');
-                  if (trimmed.startsWith('{"type":"image"')) {
+                  // If JSON parsing fails (e.g. while streaming), check if it contains our image JSON signature
+                  const trimmed = msg.content.replace(/\s/g, '');
+                  if (trimmed.includes('{"type":"image"')) {
                       isGeneratingImage = true;
                       parsedText = '';
                   }
@@ -398,13 +404,13 @@ export default function ChatPage() {
                           <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
                           <p className="text-sm text-gray-500 animate-pulse font-medium">Generating image, please wait...</p>
                         </div>
-                      ) : (
+                      ) : !attachedImage ? (
                         <span className="flex items-center gap-1.5 opacity-60 h-5">
                           <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
                           <span className="w-2 h-2 bg-primary rounded-full animate-bounce delay-100" />
                           <span className="w-2 h-2 bg-primary rounded-full animate-bounce delay-200" />
                         </span>
-                      )}
+                      ) : null}
                       {msg.role === 'user' && (
                         <button 
                           onClick={() => { setInput(parsedText || ''); fileInputRef.current?.focus(); setMobileActionsMsgIdx(null); }}

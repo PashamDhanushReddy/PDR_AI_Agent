@@ -152,6 +152,14 @@ workflow.add_conditional_edges(
     "agent",
     tools_condition,
 )
-workflow.add_edge("tools", "agent")
+def route_after_tools(state: AgentState):
+    messages = state.get("messages", []) if isinstance(state, dict) else getattr(state, "messages", [])
+    if messages:
+        last_message = messages[-1]
+        if getattr(last_message, "name", None) == "generate_image":
+            return END
+    return "agent"
+
+workflow.add_conditional_edges("tools", route_after_tools)
 
 app = workflow.compile()

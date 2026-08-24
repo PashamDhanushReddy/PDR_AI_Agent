@@ -1,6 +1,6 @@
 from django.conf import settings
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 import json
 
 def get_chat_model():
@@ -40,7 +40,8 @@ def process_chat_message(user, conversation, content, **kwargs):
         "After providing this brief information, you MUST add: 'For more details, please visit his portfolio at https://pashamdhanushreddy.github.io/E-Portfolio/'. Do not just output the link directly without the summary. "
         "CRITICAL: Do NOT output your internal thinking process, reasoning steps, or internal monologues to the user (e.g. do not output 'Here's a thinking process'). Only output the final, direct conversational response. "
         "Also, NEVER mention your 'memory', 'database', or 'background extraction' to the user. Use the provided user information naturally as if you just know it. "
-        "IMPORTANT: You have a `generate_image` tool. Whenever a user asks for images, photos, designs, inspirations, or pinterest-style visuals, you MUST use the `generate_image` tool to generate these images. Do NOT attempt to output URLs yourself. When you use this tool, your entire response should be exactly the JSON string returned by the tool. "
+        "IMPORTANT: You have a `generate_image` tool. Whenever a user asks for images, photos, designs, inspirations, or pinterest-style visuals, you MUST use the `generate_image` tool to generate these images. "
+        "CRITICAL INSTRUCTION FOR IMAGE GENERATION: In your chat history, past image generations have been replaced with the placeholder '[System: Generated an image]' to save memory. YOU MUST NEVER OUTPUT THIS PLACEHOLDER YOURSELF! To generate an image, you MUST ALWAYS call the actual `generate_image` tool. Do NOT attempt to output URLs or placeholders yourself. "
         "IMPORTANT: Do NOT force connections to the user's past topics or the creator's portfolio unless the user explicitly asks about them in the current prompt. Keep your answers strictly focused on the user's immediate question.\n"
         f"{memory_context}"
     )
@@ -48,32 +49,33 @@ def process_chat_message(user, conversation, content, **kwargs):
     
     messages = [system_prompt]
     
+    import re
     for msg in recent_messages:
-        try:
-            data = json.loads(msg.content)
-            if isinstance(data, dict):
-                if data.get("type") == "image":
-                    # DO NOT pass massive 800KB base64 strings to the LLM context
-                    parsed_content = f"[System: Generated an image with prompt '{data.get('prompt', '')}']"
-                elif "text" in data and "image" in data:
-                    # Strip base64 attachments from user messages to save tokens if they are huge, 
-                    # but typically user attachments are small or Cloudinary URLs.
-                    # We'll keep them for now as per original code.
-                    parsed_content = [
-                        {"type": "text", "text": data["text"]},
-                        {"type": "image_url", "image_url": {"url": data["image"]}}
-                    ]
+        content_str = msg.content
+        if "data:image" in content_str and re.search(r'\{[\s\n]*"type"[\s\n]*:[\s\n]*"image"', content_str):
+            # Strip out massive base64 JSON payload from history, keep any prefix
+            content_str = re.sub(r'\{[\s\n]*"type"[\s\n]*:[\s\n]*"image".*?\}', '[System: Generated an image]', content_str, flags=re.DOTALL)
+            parsed_content = content_str
+        else:
+            try:
+                data = json.loads(msg.content)
+                if isinstance(data, dict):
+                    if "text" in data and "image" in data:
+                        parsed_content = [
+                            {"type": "text", "text": data["text"]},
+                            {"type": "image_url", "image_url": {"url": data["image"]}}
+                        ]
+                    else:
+                        parsed_content = msg.content
                 else:
                     parsed_content = msg.content
-            else:
+            except Exception:
                 parsed_content = msg.content
-        except Exception:
-            parsed_content = msg.content
 
         if msg.role == 'user':
             messages.append(HumanMessage(content=parsed_content))
         elif msg.role == 'assistant':
-            messages.append(AIMessage(content=msg.content))
+            messages.append(AIMessage(content=parsed_content))
             
     # Add current message
     try:
@@ -116,6 +118,11 @@ def process_chat_message(user, conversation, content, **kwargs):
                                     yield text
                             else:
                                 yield str(msg_chunk.content)
+                        elif isinstance(msg_chunk, ToolMessage) and getattr(msg_chunk, "name", None) == "generate_image":
+                            content_str = str(msg_chunk.content)
+                            chunk_size = 8192
+                            for i in range(0, len(content_str), chunk_size):
+                                yield content_str[i:i+chunk_size]
                 except Exception as stream_err:
                     print(f"Streaming Error: {str(stream_err)}")  # Log internally for debugging
                     yield "\n[Error: Unable to fetch details from the agent at this moment.]"
