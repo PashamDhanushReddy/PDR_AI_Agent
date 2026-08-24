@@ -83,19 +83,49 @@ def calculator(expression: str) -> str:
 
 # A dummy web search tool for simplicity
 @tool
-def web_search(query: str) -> str:
-    """Search the web for current information."""
+def web_search(query: str, max_results: int = 5) -> str:
+    """Search the web for current information. Returns titles, snippets, and URLs."""
     try:
         from duckduckgo_search import DDGS
         with DDGS() as ddgs:
-            results = [r for r in ddgs.text(query, max_results=3)]
+            results = [r for r in ddgs.text(query, max_results=max_results)]
         if not results:
             return "No results found."
-        return "\n".join([f"- {r['title']}: {r['body']}" for r in results])
+        return "\n".join([f"- Title: {r['title']}\n  Snippet: {r['body']}\n  URL: {r['href']}" for r in results])
     except Exception as e:
         return f"Search error: {str(e)}"
 
-tools = [calculator, web_search, generate_image]
+@tool
+def fetch_webpage(url: str) -> str:
+    """Fetch and extract the main text content from a specific URL. Use this to read full articles, job descriptions, or details from a link found via web_search."""
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Remove script and style elements
+        for script in soup(["script", "style", "nav", "footer", "header"]):
+            script.extract()
+            
+        text = soup.get_text(separator='\n')
+        # clean up empty lines
+        lines = (line.strip() for line in text.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        text = '\n'.join(chunk for chunk in chunks if chunk)
+        
+        # Limit to 15000 characters to prevent context overflow
+        return text[:15000]
+    except Exception as e:
+        return f"Error fetching webpage: {str(e)}"
+
+tools = [calculator, web_search, fetch_webpage, generate_image]
 tool_node = ToolNode(tools)
 
 class AgentState(TypedDict):
