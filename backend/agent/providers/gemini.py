@@ -22,7 +22,7 @@ class GeminiProvider(BaseProvider):
         if not model_name and hasattr(settings, model_name_env):
             model_name = getattr(settings, model_name_env)
         if not model_name:
-            model_name = 'gemini-1.5-pro-latest'
+            model_name = 'gemini-3.5-flash'
         
         return ChatGoogleGenerativeAI(
             api_key=api_key,

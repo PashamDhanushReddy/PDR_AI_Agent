@@ -63,17 +63,22 @@ def extract_memories(user, conversation, current_message_content):
         if getattr(settings, 'MEMORY_MODEL_PROVIDER', 'auto').lower() == 'auto':
             # Use Orchestrator for fallback and tracking
             response = ModelOrchestrator.execute(messages, tools=None, config=run_config)
-            content = response.content.strip()
+            content_raw = response.content
         else:
             # Direct usage if specifically disabled for memory
             llm = get_chat_model()
             response = llm.invoke(messages)
-            content = response.content.strip()
+            content_raw = response.content
+            
+        if isinstance(content_raw, list):
+            content = "".join([item.get("text", "") if isinstance(item, dict) else str(item) for item in content_raw]).strip()
+        else:
+            content = str(content_raw).strip()
             
         if content.startswith("```json"):
-            content = content.replace("```json", "").replace("```", "").strip()
+            content = content.replace("```json", "", 1).replace("```", "").strip()
         elif content.startswith("```"):
-            content = content.replace("```", "").strip()
+            content = content.replace("```", "", 1).strip()
         data = json.loads(content)
         return data.get('actions', [])
     except Exception as e:

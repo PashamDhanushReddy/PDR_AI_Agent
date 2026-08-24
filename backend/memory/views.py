@@ -81,11 +81,17 @@ class UploadMemoryView(APIView):
         llm = get_chat_model()
         try:
             response = llm.invoke(messages)
-            content = response.content.strip()
+            content_raw = response.content
+            
+            if isinstance(content_raw, list):
+                content = "".join([item.get("text", "") if isinstance(item, dict) else str(item) for item in content_raw]).strip()
+            else:
+                content = str(content_raw).strip()
+
             if content.startswith("```json"):
-                content = content.replace("```json", "").replace("```", "").strip()
+                content = content.replace("```json", "", 1).replace("```", "").strip()
             elif content.startswith("```"):
-                content = content.replace("```", "").strip()
+                content = content.replace("```", "", 1).strip()
             actions = json.loads(content)
             
             # Save the actions to the database

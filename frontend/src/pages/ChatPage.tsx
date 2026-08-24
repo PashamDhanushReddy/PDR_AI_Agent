@@ -4,6 +4,9 @@ import axios from 'axios';
 import { Send, Menu, Plus, MessageSquare, X, Sparkles, LogOut, Settings, Moon, Lock, UploadCloud, ArrowRight, Mic, MicOff, Volume2, VolumeX, Trash2, Pencil } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { useChatStore } from '../store/chatStore';
 import { useTheme } from '../hooks/useTheme';
 import { useVoice } from '../hooks/useVoice';
@@ -313,10 +316,24 @@ export default function ChatPage() {
               {activeConversation.messages.map((msg, idx) => {
                 let parsedText = msg.content;
                 let attachedImage = null;
+                let isGeneratingImage = false;
                 try {
                   const data = JSON.parse(msg.content);
-                  if (data.text !== undefined && data.image) { parsedText = data.text; attachedImage = data.image; }
-                } catch (_) {}
+                  if (data.type === 'image' && data.image) {
+                      attachedImage = data.image;
+                      parsedText = `*Generated using ${data.model || 'Cloudflare AI'}*\n\n**Prompt:** ${data.prompt || ''}`;
+                  } else if (data.text !== undefined && data.image) { 
+                      parsedText = data.text; 
+                      attachedImage = data.image; 
+                  }
+                } catch (_) {
+                  // If JSON parsing fails (e.g. while streaming), check if it's the start of our image JSON
+                  const trimmed = msg.content.trim().replace(/\s/g, '');
+                  if (trimmed.startsWith('{"type":"image"')) {
+                      isGeneratingImage = true;
+                      parsedText = '';
+                  }
+                }
                 return (
                   <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-message-pop`} style={{ animationDelay: '40ms' }}>
                     {msg.role === 'assistant' && (
@@ -347,7 +364,8 @@ export default function ChatPage() {
                         msg.role === 'user'
                           ? <p className="whitespace-pre-wrap leading-relaxed">{parsedText}</p>
                           : <ReactMarkdown 
-                              remarkPlugins={[remarkGfm]}
+                              remarkPlugins={[remarkGfm, remarkMath]}
+                              rehypePlugins={[rehypeKatex]}
                               components={{
                                 code({ node, inline, className, children, ...props }: any) {
                                   const match = /language-(\w+)/.exec(className || '');
@@ -375,6 +393,11 @@ export default function ChatPage() {
                                 }
                               }}
                             >{parsedText}</ReactMarkdown>
+                      ) : isGeneratingImage ? (
+                        <div className="flex flex-col items-center justify-center py-4 space-y-3">
+                          <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                          <p className="text-sm text-gray-500 animate-pulse font-medium">Generating image, please wait...</p>
+                        </div>
                       ) : (
                         <span className="flex items-center gap-1.5 opacity-60 h-5">
                           <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />

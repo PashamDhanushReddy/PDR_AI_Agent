@@ -8,7 +8,7 @@ def get_chat_model():
     api_key = settings.GEMINI_API_KEY if hasattr(settings, 'GEMINI_API_KEY') else 'dummy_key'
     return ChatGoogleGenerativeAI(
         api_key=api_key,
-        model="gemini-1.5-pro-latest",
+        model="gemini-3.5-flash",
         temperature=0.7
     )
 
@@ -39,7 +39,9 @@ def process_chat_message(user, conversation, content, **kwargs):
         "He is an AI/ML Engineer, Python Developer, and Full Stack Developer based in Hyderabad, with expertise in Python, Django, FastAPI, React, and Node.js. "
         "After providing this brief information, you MUST add: 'For more details, please visit his portfolio at https://pashamdhanushreddy.github.io/E-Portfolio/'. Do not just output the link directly without the summary. "
         "CRITICAL: Do NOT output your internal thinking process, reasoning steps, or internal monologues to the user (e.g. do not output 'Here's a thinking process'). Only output the final, direct conversational response. "
-        "Also, NEVER mention your 'memory', 'database', or 'background extraction' to the user. Use the provided user information naturally as if you just know it."
+        "Also, NEVER mention your 'memory', 'database', or 'background extraction' to the user. Use the provided user information naturally as if you just know it. "
+        "IMPORTANT: You have a `generate_image` tool. Whenever a user asks for images, photos, designs, inspirations, or pinterest-style visuals, you MUST use the `generate_image` tool to generate these images. Do NOT attempt to output URLs yourself. When you use this tool, your entire response should be exactly the JSON string returned by the tool. "
+        "IMPORTANT: Do NOT force connections to the user's past topics or the creator's portfolio unless the user explicitly asks about them in the current prompt. Keep your answers strictly focused on the user's immediate question.\n"
         f"{memory_context}"
     )
     system_prompt = SystemMessage(content=system_prompt_text)
@@ -49,11 +51,20 @@ def process_chat_message(user, conversation, content, **kwargs):
     for msg in recent_messages:
         try:
             data = json.loads(msg.content)
-            if isinstance(data, dict) and "text" in data and "image" in data:
-                parsed_content = [
-                    {"type": "text", "text": data["text"]},
-                    {"type": "image_url", "image_url": {"url": data["image"]}}
-                ]
+            if isinstance(data, dict):
+                if data.get("type") == "image":
+                    # DO NOT pass massive 800KB base64 strings to the LLM context
+                    parsed_content = f"[System: Generated an image with prompt '{data.get('prompt', '')}']"
+                elif "text" in data and "image" in data:
+                    # Strip base64 attachments from user messages to save tokens if they are huge, 
+                    # but typically user attachments are small or Cloudinary URLs.
+                    # We'll keep them for now as per original code.
+                    parsed_content = [
+                        {"type": "text", "text": data["text"]},
+                        {"type": "image_url", "image_url": {"url": data["image"]}}
+                    ]
+                else:
+                    parsed_content = msg.content
             else:
                 parsed_content = msg.content
         except Exception:

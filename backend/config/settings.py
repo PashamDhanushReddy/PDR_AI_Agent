@@ -37,7 +37,7 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 NVIDIA_API_KEY = os.environ.get('NVIDIA_API_KEY')
 
-GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-pro')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-3.5-flash')
 OPENAI_MODEL = os.environ.get('OPENAI_MODEL', 'gpt-4o-mini')
 NVIDIA_MODEL = os.environ.get('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct')
 
@@ -48,6 +48,10 @@ ALLOW_MODEL_FALLBACK = os.environ.get('ALLOW_MODEL_FALLBACK', 'true').lower() ==
 
 MAX_MODEL_RETRIES = int(os.environ.get('MAX_MODEL_RETRIES', 1))
 MODEL_TIMEOUT = int(os.environ.get('MODEL_TIMEOUT', 30))
+
+CLOUDFLARE_API_TOKEN = os.environ.get('CLOUDFLARE_API_TOKEN')
+CLOUDFLARE_ACCOUNT_ID = os.environ.get('CLOUDFLARE_ACCOUNT_ID')
+IMAGE_GENERATION_MODEL = os.environ.get('IMAGE_GENERATION_MODEL', '@cf/black-forest-labs/flux-1-schnell')
 
 # Application definition
 
